@@ -1,8 +1,8 @@
-import { controllerMatrix, buttonState, joyStickState, viewMatrix } from "../render/core/controllerInput.js";
-import * as cg from "../render/core/cg.js";
-import { g2 } from "../util/g2.js";
-import {Gltf2Node} from "../render/nodes/gltf2";
-import * as global from "../global";
+import { controllerMatrix, buttonState, joyStickState, viewMatrix } from "../../render/core/controllerInput.js";
+import * as cg from "../../render/core/cg.js";
+import { g2 } from "../../util/g2.js";
+import {Gltf2Node} from "../../render/nodes/gltf2.js";
+import * as global from "../../global.js";
 
 const PI = 3.1415926;
 const grid_size = 60;

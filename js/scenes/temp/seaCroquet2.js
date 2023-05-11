@@ -1,8 +1,8 @@
 // import * as croquet from "../util/myCroquetlib.js";
-import * as croquet from "../util/croquetlib.js";
-import { controllerMatrix, buttonState } from "../render/core/controllerInput.js";
-import * as cg from "../render/core/cg.js";
-import { g2 } from "../util/g2.js";
+import * as croquet from "../../util/croquetlib.js";
+import { controllerMatrix, buttonState } from "../../render/core/controllerInput.js";
+import * as cg from "../../render/core/cg.js";
+import { g2 } from "../../util/g2.js";
 
 // let ItemsToCollect =
 //     [
