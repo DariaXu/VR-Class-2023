@@ -1,6 +1,8 @@
 import { controllerMatrix, buttonState, joyStickState, viewMatrix } from "../render/core/controllerInput.js";
 import * as cg from "../render/core/cg.js";
 import { g2 } from "../util/g2.js";
+import {Gltf2Node} from "../render/nodes/gltf2";
+import * as global from "../global";
 
 const PI = 3.1415926;
 const grid_size = 60;
@@ -9,14 +11,14 @@ const radius = 0.0001;
 const collisionSphereRad = .16;
 const large = 1.25;
 const small = .1;
-const sea_size = [5, 1.2, 5];
+const sea_size = [5, 1, 5];
 const seabed_size = [5., .125, 5.];
 const seabed_pos= [.0, -.95, .0];
 const terrain_pos= [.0, -.8, .0];
 const iPositions = [[-2, 0, 0], [0, 1, 1], [1.2, 2, -1]]; // Island positions
 const lPositions = [[-1, .5, .5], [.6, 1.5, 0]]; // Ladder positions
-const innerRadius =1.2;
-const outerRadius =1.6;
+const innerRadius =.6;
+const outerRadius =.8;
 
 const colors = [
     [1, .4, .5],// light pink
@@ -81,7 +83,7 @@ const ground = .2;
 const targetScale = [0.5, .3, .5];
 const targetLocation = [0.8, ground+targetScale[1]/2, .2];
 
-const failingOffset = .01;
+const failingOffset = .001;
 
 let prevPos = [0, 0, 0];
 
@@ -91,6 +93,10 @@ let rightTriggerPrev = false;
 export const init = async model => {
     model.setTable(false);
     model.setRoom(false);
+    console.log("hello?");
+    // let gltf1 = new Gltf2Node({ url: './media/gltf/underwater_planet/untitled.gltf'});
+    // global.gltfRoot.addNode(gltf1);
+    // gltf1.scale = [10,10,10];
     /**
      * Add Primitives for the large-scale view
      * **/
@@ -111,7 +117,7 @@ export const init = async model => {
     let inner = viewSpheres.add();
     let outer = viewSpheres.add();
     inner.add('sphere').color(colors[1]).opacity(.2);
-    outer.add('sphere').color(colors[1]).opacity(.25).flag('uNoiseTexture');
+    outer.add('sphere').color(colors[1]).opacity(.4).flag('uNoiseTexture');
     /** End of adding large-scale view **/
 
     /**
