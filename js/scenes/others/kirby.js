@@ -1,6 +1,6 @@
-import { controllerMatrix, buttonState, joyStickState } from "../render/core/controllerInput.js";
-import * as cg from "../render/core/cg.js";
-import { g2 } from "../util/g2.js";
+import { controllerMatrix, buttonState, joyStickState } from "../../render/core/controllerInput.js";
+import * as cg from "../../render/core/cg.js";
+import { g2 } from "../../util/g2.js";
 
 const DEGREE_90 = 1.5708;
 const G = 50.8;
