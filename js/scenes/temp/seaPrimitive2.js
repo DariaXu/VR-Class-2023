@@ -20,7 +20,6 @@ const lPositions = [[-1, .5, .5], [.6, 1.5, 0]]; // Ladder positions
 const innerRadius =.6;
 const outerRadius =.8;
 
-// testtest
 const colors = [
     [1, .4, .5],// light pink
     [0, .6, 1.],// light blue
