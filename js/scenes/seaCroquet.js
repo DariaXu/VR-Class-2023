@@ -1,8 +1,25 @@
-// import * as croquet from "../util/myCroquetlib.js";
 import * as croquet from "../util/croquetlib.js";
-import { controllerMatrix, buttonState } from "../render/core/controllerInput.js";
+import { controllerMatrix, buttonState, joyStickState, viewMatrix } from "../render/core/controllerInput.js";
 import * as cg from "../render/core/cg.js";
 import { g2 } from "../util/g2.js";
+import * as global from "../global.js";
+import { quat } from "../render/math/gl-matrix.js";
+import { Gltf2Node } from "../render/nodes/gltf2.js";
+
+const large = 1.25;
+const small = .1;
+const sea_size = [5, 1, 5];
+const innerRadius =1.6;
+const outerRadius =2.0;
+
+const colors = [
+    [1, .4, .5],// light pink
+    [.2, .8, 1.],// light blue
+    [0, .9, .4],// light green
+    [.9, .9, .9],// light gray
+    [.3 ,.3, .4], // mid gray
+    [.0, .0, .0], // black
+]
 
 // let ItemsToCollect =
 //     [
