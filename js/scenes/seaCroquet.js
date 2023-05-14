@@ -29,6 +29,8 @@ let worldG = null;
 let target = null;
 let objsInScene = { trophies: [], oxygenTanks: [] };
 
+let itemInTarget = 0;
+
 // let testBox = null;
 
 //#region Collect Objects - Primitive 
@@ -100,6 +102,8 @@ let ifHitAnyTanks = (controllerM) => {
     for (let i = 0; i < window.croquetModel.scene[OXYGEN_TANK].length; i++) {
         // console.log(`ifHitAnyTanks: ${i}`)
         // console.log(`ifHitAnyTrophies: ${window.croquetModel.scene[i].matrix}`);
+        if(window.croquetModel.scene[OXYGEN_TANK][i].removed) continue;
+
         const b = isInBoxGltf(m, window.croquetModel.scene[OXYGEN_TANK][i].matrix);
         // console.log(b)
         if (b) {
@@ -116,8 +120,8 @@ let ifHitAnyTanks = (controllerM) => {
 
 let OnHitTank = (objIndex, triggerPrev, m) => {
     let hitObjInfo = window.croquetModel.scene[OXYGEN_TANK][objIndex];
-    // move to HUD
-    // worldG.removeNode(objsInScene.oxygenTanks[objIndex]);
+    hitObjInfo.removed =true;
+    worldG.removeNode(objsInScene.oxygenTanks[objIndex]);
     O2Bar.value = Math.min(O2Bar.value + amountInTank, 1);
     console.log(`getTank: ${objIndex}`);
 }
@@ -125,16 +129,26 @@ let OnHitTank = (objIndex, triggerPrev, m) => {
 
 //#region Game State
 let O2Bar = null;
-let bar = null;
+let subO2Bar = null;
 let createOxygenBar = () => {
     let O2Bar = window.clay.model.add('cube').texture(() => {
         g2.drawWidgets(O2Bar);
     });
     O2Bar.value = 1;
-    bar = g2.addWidget(O2Bar, 'slider', .375, .068, '#80ffff', 'O2', value => { });
+    subO2Bar = g2.addWidget(O2Bar, 'slider', .375, .068, '#80ffff', 'O2', value => { });
     return O2Bar
 }
 
+let progressBar = null;
+let subPBar = null;
+let createProgressBar = () => {
+    let progressBar = window.clay.model.add('cube').texture(() => {
+        g2.drawWidgets(progressBar);
+    });
+    progressBar.value = 0;
+    subPBar = g2.addWidget(progressBar, 'slider', .375, .068, '#80ff82', ' ', value => { });
+    return progressBar
+}
 
 let ifSuccess = () => {
     if (objsInScene.trophies.length == 0) return false;
@@ -150,6 +164,7 @@ let ifSuccess = () => {
             counter += 1;
         }
     }
+    itemInTarget = counter;
     if (counter == objsInScene.length) {
         return true;
     }
@@ -207,6 +222,7 @@ export let initModel = () => {                                // INITIALIZE THE 
         window.croquetModel.scene[1].push({
             location: objInfo.location,
             matrix: null,
+            removed: false,
         });
     }
     // console.log(window.croquetModel.scene.length);
@@ -217,17 +233,29 @@ let drawObjects = () => {
     if (O2Bar == null) {
         O2Bar = createOxygenBar();
     }
+    // console.log('drawObjects1')
     if (O2Bar) {
         // O2Bar.setMatrix(rcb.beamMatrix()).move(0, 0.43, -0.6).scale(.2, .2, .0001);
         O2Bar.value = Math.max(0,O2Bar.value-O2ConsumedPerTick);
-        O2Bar.hud().move(-.8 , .6, -1).scale(1, .4, .0001);
-        bar.setValue(O2Bar.value);
+        O2Bar.hud().move(-.9 , .3, -1).scale(1, .4, .0001);
+        subO2Bar.setValue(O2Bar.value);
     }
 
+    if(progressBar == null){
+        progressBar = createProgressBar();
+    }
+    if (progressBar) {
+        // O2Bar.setMatrix(rcb.beamMatrix()).move(0, 0.43, -0.6).scale(.2, .2, .0001);
+        progressBar.value = itemInTarget/window.croquetModel.scene[TROPHIES].length;
+        progressBar.hud().move(0 , .6, -1).scale(2, .4, .0001);
+        subPBar.setValue(progressBar.value);
+    }
+
+    // console.log('drawObjects2')
     if (gameEndW) {
         gameEndW.hud().scale(.4, .4, .0001);
     }
-
+    // console.log('drawObjects3')
     if (objsInScene.trophies.length == 0) {
         worldG = new Gltf2Node({ url: './media/gltf/underwater_planet/untitled.gltf' });
         // worldG = new Gltf2Node({ url: './media/gltf/sunflower/sunflower.gltf' });
@@ -254,7 +282,7 @@ let drawObjects = () => {
         // testBox = window.clay.model.add('cube');
 
     }
-
+    // console.log('drawObjects4')
     for (let i = 0; i < window.croquetModel.scene[TROPHIES].length; i++) {
         let objInfo = window.croquetModel.scene[TROPHIES][i];
         let curObj = objsInScene.trophies[i];
@@ -272,9 +300,11 @@ let drawObjects = () => {
             // console.log(`draw2: ${objInfo.matrix}`)
         }
     }
-
+    // console.log('drawObjects5')
     for (let i = 0; i < window.croquetModel.scene[OXYGEN_TANK].length; i++) {
+        
         let tankInfo = window.croquetModel.scene[OXYGEN_TANK][i];
+        if(tankInfo.removed) continue;
         let tankObj = objsInScene.oxygenTanks[i];
 
         tankObj.scale = tankScale;
@@ -284,9 +314,10 @@ let drawObjects = () => {
     }
     // let t = objsInScene.oxygenTanks[0].worldMatrix.slice(12,15);
     // testBox.identity().move([t[0],t[1]+.125, t[2]]).scale([.125*.5,.3*.5,.125*.5]).opacity(.7);
-
+    // console.log('drawObjects6')
     target.identity().move(targetLocation).scale(targetScale).opacity(.7);
     worldG.translation = [0, -3, 0];
+    // console.log('drawObjects7')
 }
 
 export let drawView = () => {          
@@ -306,7 +337,7 @@ let failing = () => {
 }
 
 export let updateModel = e => {
-    // console.log("UPDATE")
+    console.log("UPDATE")
     if (window.demoseaCroquetState) {
         // e.where => controller matrix, e.info => if trigger previous pressed
         if (objsInScene.trophies.length == 0) return;
@@ -315,7 +346,7 @@ export let updateModel = e => {
             let rightTriggerPrev = e.info;
             let rightInAny = ifHitAnyTrophies(mr);
 
-            // console.log(`right press: ${mr}`)
+            console.log(`right press`)
             if (rightInAny != -1) {
                 OnHitTrophy(rightInAny, rightTriggerPrev, mr);
             }
@@ -366,7 +397,7 @@ export let updateModel = e => {
 }
 
 export const init = async model => {
-    croquet.register('croquetDemo_mydemo1');
+    croquet.register('croquetDemo_mydemo3');
     model.setTable(false);
     model.setRoom(false);
     model.animate(() => {
