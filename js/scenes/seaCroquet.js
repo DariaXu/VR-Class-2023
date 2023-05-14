@@ -10,10 +10,9 @@ import { lcb, rcb } from '../handle_scenes.js';
 const TROPHIES = 0;
 const OXYGEN_TANK = 1;
 
-const ground = .2;
+const ground = .1;
 const targetScale = [0.5, .3, .5];
 const targetLocation = [0.8, ground + targetScale[1] / 2, .2];
-const failingOffset = .01;
 
 // const tankScale = [.5,.5,.5];
 const tankScale = [.05, .05, .05];
@@ -30,6 +29,7 @@ let target = null;
 let objsInScene = { trophies: [], oxygenTanks: [] };
 
 let itemInTarget = 0;
+let numOfTrophies = 0;
 
 // let testBox = null;
 
@@ -43,20 +43,18 @@ let isInBoxPrimitive = (p, boxM) => {
 
 let ifHitAnyTrophies = (controllerM) => {
     let m = controllerM.slice(12, 15);
-
     for (let i = 0; i < window.croquetModel.scene[TROPHIES].length; i++) {
-        // console.log(`ifHitAnyTrophies: ${i}`)
-        // console.log(`ifHitAnyTrophies: ${window.croquetModel.scene[i].matrix}`);
         const b = isInBoxPrimitive(m, window.croquetModel.scene[TROPHIES][i].matrix);
         // console.log(b)
         if (b) {
             // console.log("color blue")
             // window.croquetModel.scene[i].color = [0, 0, 1];
             return i;
-        } else {
-            // console.log("reset")
-            window.croquetModel.scene[TROPHIES][i].color = [1, 1, 1];
-        }
+        } 
+        // else {
+        //     // console.log("reset")
+        //     window.croquetModel.scene[TROPHIES][i].color = [1, 1, 1];
+        // }
     }
     return -1;
 }
@@ -100,8 +98,6 @@ let ifHitAnyTanks = (controllerM) => {
     let m = controllerM.slice(12, 15);
 
     for (let i = 0; i < window.croquetModel.scene[OXYGEN_TANK].length; i++) {
-        // console.log(`ifHitAnyTanks: ${i}`)
-        // console.log(`ifHitAnyTrophies: ${window.croquetModel.scene[i].matrix}`);
         if(window.croquetModel.scene[OXYGEN_TANK][i].removed) continue;
 
         const b = isInBoxGltf(m, window.croquetModel.scene[OXYGEN_TANK][i].matrix);
@@ -158,7 +154,7 @@ let ifSuccess = () => {
         // console.log(objsInScene[i].obj.getGlobalMatrix());
         const b = isInBoxPrimitive(objsInScene.trophies[i].getGlobalMatrix().slice(12, 15), target.getGlobalMatrix());
 
-        if (b) {
+        if (b && window.croquetModel.scene[TROPHIES][i].isTrophy) {
             // console.log("Success")
             window.croquetModel.scene[TROPHIES][i].color = [0, 1, 0];
             counter += 1;
@@ -192,20 +188,12 @@ export let initModel = () => {                                // INITIALIZE THE 
     // console.log(objsInScene.length);
     let items =
         [
-            { location: [0.2, 1, .5], scale: .3, color: [1, 1, 1] },
-            { location: [0, 1, .5], scale: .3, color: [1, 1, 1] },
-            { location: [-0.2, 1, .5], scale: .3, color: [1, 1, 1] },
+            { location: [0.2, 1, .5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
+            { location: [0, 1, .5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
+            { location: [-0.2, 1, .5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
+            { location: [0.2, .1, .5], scale: .3, color: [0, 0, 0], failingOffset: .1 , isTrophy: false}, // scene objects, should initially be on the ground 
         ];
-
-    let oxygenTanks =
-        [
-            { location: [0.3, 4, .8] },
-            { location: [0, 4, .8] },
-            { location: [-0.3, 4, .8] },
-        ]
-
     window.croquetModel.scene.push([]);
-
     for (const objInfo of items) {
         window.croquetModel.scene[0].push({
             location: objInfo.location,
@@ -214,9 +202,17 @@ export let initModel = () => {                                // INITIALIZE THE 
             activated: false,
             color: objInfo.color,
             scale: objInfo.scale,
+            failingOffset: objInfo.failingOffset,
+            isTrophy: objInfo.isTrophy,
         });
     }
 
+    let oxygenTanks =
+        [
+            { location: [0.3, 4, .8] },
+            { location: [0, 4, .8] },
+            { location: [-0.3, 4, .8] },
+        ]
     window.croquetModel.scene.push([]);
     for (const objInfo of oxygenTanks) {
         window.croquetModel.scene[1].push({
@@ -225,7 +221,6 @@ export let initModel = () => {                                // INITIALIZE THE 
             removed: false,
         });
     }
-    // console.log(window.croquetModel.scene.length);
 }
 
 let drawObjects = () => {
@@ -239,16 +234,6 @@ let drawObjects = () => {
         O2Bar.value = Math.max(0,O2Bar.value-O2ConsumedPerTick);
         O2Bar.hud().move(-.9 , .3, -1).scale(1, .4, .0001);
         subO2Bar.setValue(O2Bar.value);
-    }
-
-    if(progressBar == null){
-        progressBar = createProgressBar();
-    }
-    if (progressBar) {
-        // O2Bar.setMatrix(rcb.beamMatrix()).move(0, 0.43, -0.6).scale(.2, .2, .0001);
-        progressBar.value = itemInTarget/window.croquetModel.scene[TROPHIES].length;
-        progressBar.hud().move(0 , .6, -1).scale(2, .4, .0001);
-        subPBar.setValue(progressBar.value);
     }
 
     // console.log('drawObjects2')
@@ -273,8 +258,9 @@ let drawObjects = () => {
         worldP = window.clay.model.add();
         target = worldP.add('cube');
 
-        for (const _ of window.croquetModel.scene[TROPHIES]) {
+        for (const objInfo of window.croquetModel.scene[TROPHIES]) {
             // console.log(`creating cube: ${window.croquetModel.scene[TROPHIES].length}`);
+            if (objInfo.isTrophy) numOfTrophies += 1;
             let initObj = window.clay.model.add('cube');
             objsInScene.trophies.push(initObj);
         }
@@ -294,7 +280,7 @@ let drawObjects = () => {
             let objGround = Array.isArray(objInfo.scale) ? ground + (objInfo.scale[1] / 2) : (ground + objInfo.scale / 2);
 
             if (objInfo.inMovement && objInfo.matrix[13] > objGround) {
-                objInfo.matrix[13] -= failingOffset;
+                objInfo.matrix[13] -= objInfo.failingOffset;
             }
             curObj.setMatrix(objInfo.matrix).color(objInfo.color).scale(objInfo.scale);
             // console.log(`draw2: ${objInfo.matrix}`)
@@ -318,6 +304,16 @@ let drawObjects = () => {
     target.identity().move(targetLocation).scale(targetScale).opacity(.7);
     worldG.translation = [0, -3, 0];
     // console.log('drawObjects7')
+
+    if(progressBar == null){
+        progressBar = createProgressBar();
+    }
+    if (progressBar) {
+        // O2Bar.setMatrix(rcb.beamMatrix()).move(0, 0.43, -0.6).scale(.2, .2, .0001);
+        progressBar.value = itemInTarget/numOfTrophies;
+        progressBar.hud().move(0 , .6, -1).scale(2, .4, .0001);
+        subPBar.setValue(progressBar.value);
+    }
 }
 
 export let drawView = () => {          
