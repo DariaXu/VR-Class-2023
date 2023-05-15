@@ -4,6 +4,10 @@ import { g2 } from "../util/g2.js";
 import * as global from "../global.js";
 import { quat } from "../render/math/gl-matrix.js";
 import { Gltf2Node } from "../render/nodes/gltf2.js";
+
+// custom shapes
+import defineOctTube from "./newShapes.js"
+
 const large = 1.25;
 const small = .1;
 const sea_size = [5, 1, 5];
@@ -57,6 +61,13 @@ export const init = async model => {
     // add underwater setup
     // set up the glft part
     console.log("hello?");
+    /**
+     * Define custom primitives
+     */
+    defineOctTube();
+    /** end of define custom primitives
+     */
+
     let gltf1 = new Gltf2Node({ url: './media/gltf/underwater_planet/untitled.gltf'});
     gltf1.scale = [.5,.5,.5];
     gltf1.translation = cg.scale(playerPos, -1);
@@ -231,46 +242,92 @@ export const init = async model => {
         let zDir = ivm.slice(8,11); // z axis, relative to view direction
         joyStickX = joyStickState.right.x;
         joyStickY = joyStickState.right.y;
-
+        let maxSpeed = .4;
+        // if (joyStickX!=0){
+        //     speedX = Math.min(maxSpeed, speedX + (joyStickX - prevX) * 0.003);
+        // }
         if (joyStickX!=0){
-            if(prevX==0){
-                accX = .02;
+            if (joyStickX>0){
+                speedX = Math.min(maxSpeed, speedX + (joyStickX - prevX) * 0.005);
             }
-            else if(Math.abs(joyStickX)<Math.abs(prevX)){
-                accX = -0.002;
+            else if (joyStickX<0){
+                speedX = Math.max(-maxSpeed, speedX + (joyStickX - prevX) * 0.005);
             }
-            else{
-                accX -= 0.001;
-                accX = Math.max(accX,0);
-            }
-            speedX = Math.max(speedX + accX,0);
-            //let movement = cg.add(cg.scale(xDir,speedX * joyStickX), cg.scale(zDir,speed * joyStickY));
-            playerPos = cg.add(playerPos, cg.scale(xDir,speedX * joyStickX));
+
         }
-        else{
-            if (speedX>0)
-                speedX = Math.max(speedX - 0.001,0);
+        else {
+            if (speedX>0){
+                speedX = Math.max(0, speedX - 0.001);
+            }
+            else if (speedX<0){
+                speedX = Math.min(0, speedX + 0.001);
+            }
+            else
+                speedX = 0;
         }
         if (joyStickY!=0){
-            if(prevY==0){
-                accY = .02;
+            if (joyStickY>0){
+                speedY = Math.min(maxSpeed, speedY + (joyStickY - prevY) * 0.005);
             }
-            else if(Math.abs(joyStickY)<Math.abs(prevY)){
-                accY = -0.002;
+            else if (joyStickY<0){
+                speedY = Math.max(-maxSpeed, speedY + (joyStickY - prevY) * 0.005);
             }
-            else{
-                accY -= 0.001;
-                accY = Math.max(accY,0);
-            }
-            speedY = Math.max(speedY + accY,0);
-            playerPos = cg.add(playerPos, cg.scale(zDir,speedY * joyStickY));
+
         }
-        else{
-            if (speedY>0)
-                speedY = Math.max(speedY - 0.001,0);
+        else {
+            if (speedY>0){
+                speedY = Math.max(0, speedY - 0.001);
+            }
+            else if (speedY<0){
+                speedY = Math.min(0, speedY + 0.001);
+            }
+            else
+                speedY = 0;
         }
+        // if (joyStickX!=0){
+        //     if(prevX==0){
+        //         accX = .02;
+        //     }
+        //     else if(Math.abs(joyStickX)<Math.abs(prevX)){
+        //         accX = -0.002;
+        //     }
+        //     else{
+        //         accX -= 0.001;
+        //         accX = Math.max(accX,0);
+        //     }
+        //     speedX = Math.max(speedX + accX,0);
+        //     //let movement = cg.add(cg.scale(xDir,speedX * joyStickX), cg.scale(zDir,speed * joyStickY));
+        //     playerPos = cg.add(playerPos, cg.scale(xDir,speedX * joyStickX));
+        // }
+        // else{
+        //     if (speedX>0)
+        //         speedX = Math.max(speedX - 0.001,0);
+        // }
+        // if (joyStickY!=0){
+        //     if(prevY==0){
+        //         accY = .02;
+        //     }
+        //     else if(Math.abs(joyStickY)<Math.abs(prevY)){
+        //         accY = -0.002;
+        //     }
+        //     else{
+        //         accY -= 0.001;
+        //         accY = Math.max(accY,0);
+        //     }
+        //     speedY = Math.max(speedY + accY,0);
+        //     playerPos = cg.add(playerPos, cg.scale(zDir,speedY * joyStickY));
+        // }
+        // else{
+        //     if (speedY>0)
+        //         speedY = Math.max(speedY - 0.001,0);
+        // }
         prevX = joyStickX;
         prevY = joyStickY;
+
+        let movement = cg.add(cg.scale(xDir,speedX), cg.scale(zDir,speedY));
+        playerPos = cg.add(playerPos, movement);
+
+
         gltf1.translation = cg.scale(playerPos, -1);
 
 
