@@ -1,3 +1,4 @@
+// import * as croquet from "../util/myCroquetlib.js";
 import * as croquet from "../util/croquetlib.js";
 import { controllerMatrix, buttonState } from "../render/core/controllerInput.js";
 import * as cg from "../render/core/cg.js";
@@ -60,7 +61,19 @@ let ifHitAnyTrophies = (controllerM) => {
 
 let OnHitTrophy = (objIndex, triggerPrev, m) => {
     let hitObjInfo = window.croquetModel.scene[TROPHIES][objIndex];
-    hitObjInfo.color = [1, 0, 0];
+    hitObjInfo.color =  [1, .2, .2];
+    let B = m.slice(12, 15);
+    if (!triggerPrev)
+        prevPos = B;
+    else
+        hitObjInfo.matrix = cg.mMultiply(cg.mTranslate(cg.subtract(B, prevPos)), hitObjInfo.matrix);
+
+    prevPos = B;
+    hitObjInfo.activated = true;
+}
+let OnHitBlocker = (objIndex, triggerPrev, m) => {
+    let hitObjInfo = window.croquetModel.scene[TROPHIES][objIndex];
+    hitObjInfo.color =  [.9, .9, 1];
     let B = m.slice(12, 15);
     if (!triggerPrev)
         prevPos = B;
@@ -188,10 +201,10 @@ export let initModel = () => {                                // INITIALIZE THE 
     // console.log(objsInScene.length);
     let items =
         [
-            { location: [0.9, ground, -1], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
+            { location: [0.5, ground, -1], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
             { location: [0, ground, .5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
-            { location: [-0.2,ground, 1.5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
-            { location: [0.2, ground+.5, .5], scale: [.6,.2,.9], color: [0, 0, 0], failingOffset: .1 , isTrophy: false}, // scene objects, should initially be on the ground
+            { location: [-0.5,ground, 1.5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
+            { location: [0.2, ground+.5, .5], scale: [.6,.2,.9], color: [.9, .9, .9], failingOffset: .1 , isTrophy: false, texture:'../media/textures/rock1.png'}, // scene objects, should initially be on the ground
         ];
     window.croquetModel.scene.push([]);
     for (const objInfo of items) {
@@ -204,6 +217,7 @@ export let initModel = () => {                                // INITIALIZE THE 
             scale: objInfo.scale,
             failingOffset: objInfo.failingOffset,
             isTrophy: objInfo.isTrophy,
+            texture: objInfo.texture,
         });
     }
 
@@ -273,7 +287,7 @@ let drawObjects = () => {
         let objInfo = window.croquetModel.scene[TROPHIES][i];
         let curObj = objsInScene.trophies[i];
         if (objInfo.matrix == null) {
-            curObj.identity().move(objInfo.location).color(objInfo.color).scale(objInfo.scale);
+            curObj.identity().move(objInfo.location).color(objInfo.color).scale(objInfo.scale).texture(objInfo.texture);
             objInfo.matrix = curObj.getGlobalMatrix();
             // console.log(`draw1: ${curObj.getGlobalMatrix()}`)
         } else {
@@ -327,7 +341,8 @@ let failing = () => {
     for (const objInfo of window.croquetModel.scene[TROPHIES]) {
         if (objInfo.activated) {
             objInfo.inMovement = true;
-            objInfo.color = [1, 1, 1];
+            if (objInfo.isTrophy)
+                objInfo.color = [1, 1, 1];
         }
     }
 }
@@ -337,14 +352,28 @@ export let updateModel = e => {
     // if (window.demoseaCroquetState) {
     // e.where => controller matrix, e.info => if trigger previous pressed
     if (objsInScene.trophies.length == 0) return;
-    if (e.what == "rightTriggerPressed") {
+    if (e.what == "bothTriggerPressed" && ifHitAnyTrophies(e.where.left)==ifHitAnyTrophies(e.where.right)){
+        let ml = e.where.left;
+        let leftInAny = ifHitAnyTrophies(ml);
+        let leftTriggerPrev = e.info;
+        if (leftInAny != -1){
+            let hitObjInfo = window.croquetModel.scene[TROPHIES][leftInAny];
+            if (hitObjInfo.isTrophy)
+                OnHitTrophy(leftInAny, leftTriggerPrev , ml);
+            else
+                OnHitBlocker(leftInAny, leftTriggerPrev , ml);
+        }
+
+    }
+    else if (e.what == "rightTriggerPressed") {
         let mr = e.where;
         let rightTriggerPrev = e.info;
         let rightInAny = ifHitAnyTrophies(mr);
 
         console.log(`right press`)
         if (rightInAny != -1) {
-            OnHitTrophy(rightInAny, rightTriggerPrev, mr);
+            if (window.croquetModel.scene[TROPHIES][rightInAny].isTrophy)
+                OnHitTrophy(rightInAny, rightTriggerPrev, mr);
         }
 
     } else if (e.what == "leftTriggerPressed") {
@@ -354,7 +383,8 @@ export let updateModel = e => {
 
         if (leftInAny != -1) {
             // left controller hit something
-            OnHitTrophy(leftInAny, leftTriggerPrev, ml);
+            if (window.croquetModel.scene[TROPHIES][leftInAny].isTrophy)
+                OnHitTrophy(leftInAny, leftTriggerPrev, ml);
         }
     } else if (e.what == "rightTriggerRelease") {
         failing();

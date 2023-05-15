@@ -1,11 +1,12 @@
 // import * as croquet from "../util/myCroquetlib.js";
 import * as croquet from "../util/croquetlib.js";
-import { controllerMatrix, buttonState } from "../render/core/controllerInput.js";
+import { controllerMatrix, buttonState, joyStickState } from "../render/core/controllerInput.js";
 import * as cg from "../render/core/cg.js";
 import { g2 } from "../util/g2.js";
 import * as global from "../global.js";
 import { Gltf2Node } from "../render/nodes/gltf2.js";
 import { lcb, rcb } from '../handle_scenes.js';
+import defineOctTube from "./newShapes.js"
 
 const TROPHIES = 0;
 const OXYGEN_TANK = 1;
@@ -20,6 +21,29 @@ const tankDimensions = { x: 1.5 * tankScale[0], y: 3 * tankScale[1], z: 1.5 * ta
 const getTankCentral = (m) => { return { x: m[0], y: m[1] + .125, z: m[2] }; };
 const amountInTank = .2;
 const O2ConsumedPerTick = .001;
+
+const worldGOffset = [.1, -2.5, .1];
+
+const large = 1.25;
+const small = .1;
+const sea_size = [5, 1, 5];
+const innerRadius =4;
+const outerRadius =5;
+
+const colors = [
+    [1, .4, .5],// light pink
+    [.2, .8, 1.],// light blue
+    [0, .9, .4],// light green
+    [.9, .9, .9],// light gray
+    [.3 ,.3, .4], // mid gray
+    [.0, .0, .0], // black
+]
+
+let speed = 0.025;
+let speedX = 0, speedY = 0;
+let prevX = 0, prevY = 0; // Left joystick's previous positions
+let playerPos = [.1, 2.5, .1];
+const maxSpeed = .5
 
 let prevPos = [0, 0, 0];
 
@@ -61,19 +85,7 @@ let ifHitAnyTrophies = (controllerM) => {
 
 let OnHitTrophy = (objIndex, triggerPrev, m) => {
     let hitObjInfo = window.croquetModel.scene[TROPHIES][objIndex];
-    hitObjInfo.color =  [1, .2, .2];
-    let B = m.slice(12, 15);
-    if (!triggerPrev)
-        prevPos = B;
-    else
-        hitObjInfo.matrix = cg.mMultiply(cg.mTranslate(cg.subtract(B, prevPos)), hitObjInfo.matrix);
-
-    prevPos = B;
-    hitObjInfo.activated = true;
-}
-let OnHitBlocker = (objIndex, triggerPrev, m) => {
-    let hitObjInfo = window.croquetModel.scene[TROPHIES][objIndex];
-    hitObjInfo.color =  [.9, .9, 1];
+    hitObjInfo.color = [1, 0, 0];
     let B = m.slice(12, 15);
     if (!triggerPrev)
         prevPos = B;
@@ -136,6 +148,7 @@ let OnHitTank = (objIndex, triggerPrev, m) => {
 //#endregion
 
 //#region Game State
+
 let O2Bar = null;
 let subO2Bar = null;
 let createOxygenBar = () => {
@@ -195,16 +208,85 @@ let GameEnd = () => {
 }
 //#endregion
 
+//#region Movement
+let updateSpeed = (joyStickX, joyStickY, viewId)=>{
+    console.log(`updateSpeed: key: ${viewId};; ${JSON.stringify(window.croquetModel.scene.avatars[viewId])}`);
+    let speedX = window.croquetModel.scene.avatars[viewId].speedX;
+    let speedY = window.croquetModel.scene.avatars[viewId].speedY;
+    let prevX = window.croquetModel.scene.avatars[viewId].prevX;
+    let prevY = window.croquetModel.scene.avatars[viewId].prevY;
+
+    if (joyStickX!=0){
+        if (joyStickX>0){
+            window.croquetModel.scene.avatars[viewId].speedX = Math.min(maxSpeed, speedX + (joyStickX - prevX) * 0.005);
+        }
+        else if (joyStickX<0){
+            window.croquetModel.scene.avatars[viewId].speedX = Math.max(-maxSpeed, speedX + (joyStickX - prevX) * 0.005);
+        }
+    }
+    else {
+        if (speedX>0){
+            window.croquetModel.scene.avatars[viewId].speedX = Math.max(0, speedX - 0.001);
+        }
+        else if (speedX<0){
+            window.croquetModel.scene.avatars[viewId].speedX = Math.min(0, speedX + 0.001);
+        }
+        else
+            window.croquetModel.scene.avatars[viewId].speedX = 0;
+    }
+    if (joyStickY!=0){
+        if (joyStickY>0){
+            window.croquetModel.scene.avatars[viewId].speedY = Math.min(maxSpeed, speedY + (joyStickY - prevY) * 0.005);
+        }
+        else if (joyStickY<0){
+            window.croquetModel.scene.avatars[viewId].speedY = Math.max(-maxSpeed, speedY + (joyStickY - prevY) * 0.005);
+        }
+
+    }
+    else {
+        if (speedY>0){
+            window.croquetModel.scene.avatars[viewId].speedY = Math.max(0, speedY - 0.001);
+        }
+        else if (speedY<0){
+            window.croquetModel.scene.avatars[viewId].speedY = Math.min(0, speedY + 0.001);
+        }
+        else
+            window.croquetModel.scene.avatars[viewId].speedY = 0;
+    }
+
+    window.croquetModel.scene.avatars[viewId].prevX = joyStickX;
+    window.croquetModel.scene.avatars[viewId].prevY = joyStickY;
+    // console.log(`updateSpeed: x: ${window.croquetModel.scene.avatars[viewId].speedX};; y: ${window.croquetModel.scene.avatars[viewId].speedY}`);
+}
+//#endregion
+
+//#region Croquet
+let initAvatarSpeed = () => {
+    // console.log(`initAvatarSpeed`)
+    for (let key in window.avatars) {
+        // console.log(`initAvatarSpeed: KEY ${key}`)
+        if (!key || key == undefined ||
+            key in window.croquetModel.scene.avatars) continue;
+        window.croquetModel.scene.avatars[key] = {
+            prevX: 0,
+            prevY:0,
+            speedX: 0,
+            speedY: 0,
+            position:[0,0,0],
+        };
+        // console.log(`initAvatarSpeed: key: ${key};; ${JSON.stringify(window.croquetModel.scene.avatars[key])}`);
+    }
+}
+
 export let initModel = () => {                                // INITIALIZE THE MODEL DATA.
-    console.log("hello from seaCroquet3");
     window.croquetModel.scene = [];
     // console.log(objsInScene.length);
     let items =
         [
-            { location: [0.2, ground, .5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
-            { location: [0, ground, .5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
-            { location: [-0.2,ground, .5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
-            { location: [0.2, ground+.5, .5], scale: [.6,.2,.9], color: [.9, .9, .9], failingOffset: .1 , isTrophy: false, texture:'../media/textures/rock1.png'}, // scene objects, should initially be on the ground
+            { location: [0.2, 1, .5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
+            { location: [0, 1, .5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
+            { location: [-0.2, 1, .5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
+            { location: [0.2, .1, .5], scale: .3, color: [0, 0, 0], failingOffset: .1 , isTrophy: false}, // scene objects, should initially be on the ground
         ];
     window.croquetModel.scene.push([]);
     for (const objInfo of items) {
@@ -217,7 +299,6 @@ export let initModel = () => {                                // INITIALIZE THE 
             scale: objInfo.scale,
             failingOffset: objInfo.failingOffset,
             isTrophy: objInfo.isTrophy,
-            texture: objInfo.texture,
         });
     }
 
@@ -235,14 +316,111 @@ export let initModel = () => {                                // INITIALIZE THE 
             removed: false,
         });
     }
+
+    window.croquetModel.scene.avatars = {};
+    initAvatarSpeed();
+}
+
+let initDraw = () => {
+    worldG = new Gltf2Node({ url: './media/gltf/underwater_planet/untitled.gltf' });
+    // worldG = new Gltf2Node({ url: './media/gltf/sunflower/sunflower.gltf' });
+    global.gltfRoot.addNode(worldG);
+    for (const _ of window.croquetModel.scene[OXYGEN_TANK]) {
+
+        // let initTank = new Gltf2Node({ url: './media/gltf/oxygen_kit/scene.gltf' });
+        // let initTank = new Gltf2Node({ url: './media/gltf/oxygen_ballon/scene.gltf' });
+        let initTank = new Gltf2Node({ url: './media/gltf/oxygen_tank/scene.gltf' });
+
+        worldG.addNode(initTank);
+        objsInScene.oxygenTanks.push(initTank);
+    }
+
+    worldP = window.clay.model.add();
+
+    // target init
+    target = worldP.add();
+    for (let i = 0; i<8; i++){
+        target.add('cube').texture('../media/textures/wood1.png');
+    }
+    target.add('octTubeY').texture('../media/textures/wood1.png');
+    // target = worldP.add('cube');
+
+    for (const objInfo of window.croquetModel.scene[TROPHIES]) {
+        // console.log(`creating cube: ${window.croquetModel.scene[TROPHIES].length}`);
+        if (objInfo.isTrophy) numOfTrophies += 1;
+        let initObj = worldP.add('cube');
+        objsInScene.trophies.push(initObj);
+    }
+
+    // testBox = window.clay.model.add('cube');
+
+}
+
+let addOffsetToM = (m, offset) => {
+    m[12] += offset[0];
+    m[13] += offset[1];
+    m[14] += offset[2];
+    return m;
+}
+
+let syncMwithoutPos = (fromM, toM) =>{
+    for(let i = 0; i < 12; i ++) {
+        fromM[i] = toM[i];
+    }
+    return toM;
+}
+
+export let drawAvatar = (actor) =>{
+    // console.log(`drawAvatar: ID: ${actor.viewId}`);
+    // 1. 从avatarInfo， 并把matrix按原来的样子设置
+    let avatarInfo = actor.avatarPos;
+    if (avatarInfo.headset) {
+        window.avatars[actor.viewId].headset.matrix = avatarInfo.headset;
+    }
+    // not in the default pos
+    if (avatarInfo.controllerMatrix) {
+        window.avatars[actor.viewId].leftController.matrix = avatarInfo.controllerMatrix.left;
+        window.avatars[actor.viewId].rightController.matrix = avatarInfo.controllerMatrix.right;
+    }
+    // 2.拿到x,z direction
+    let oldM = window.avatars[actor.viewId].headset.matrix;
+    let ivm = cg.mInverse(oldM);
+    let xDir = ivm.slice(0,3); // x axis, relative to view direction
+    let zDir = ivm.slice(8,11); // z axis, relative to view direction
+
+    //3. 用 x，z direction 计算movement （如果还没有scene， 以下都跳过）
+    let key = actor.viewId;
+    if (!window.hasOwnProperty('croquetModel') || !window.croquetModel.scene.avatars[key]) return;
+    // console.log(`drawAvatar: HAS KEY `)
+    let speedX = window.croquetModel.scene.avatars[key].speedX;
+    let speedY = window.croquetModel.scene.avatars[key].speedY;
+    let movement = cg.add(cg.scale(xDir,speedX), cg.scale(zDir,speedY));
+
+    // 4. 把movement加到原来记录的position上
+    window.croquetModel.scene.avatars[key].position = cg.add(movement, window.croquetModel.scene.avatars[key].position);
+
+    // 5. 改avatar info的headsetmatrix的位置(add position to original location)
+    window.avatars[key].headset.matrix = addOffsetToM(window.avatars[key].headset.matrix, window.croquetModel.scene.avatars[key].position);
+
+    // controller
+    window.avatars[key].leftController.matrix = addOffsetToM(window.avatars[key].leftController.matrix, window.croquetModel.scene.avatars[key].position);
+    window.avatars[key].rightController.matrix = addOffsetToM(window.avatars[key].rightController.matrix, window.croquetModel.scene.avatars[key].position);
+
+
+    // let playerPos = cg.add(window.croquetModel.scene.avatars[key].position, movement);
+
+    // console.log(`drawAvatar: ${actor.viewId}`);
+    // }
 }
 
 let drawObjects = () => {
     // console.log('drawObjects')
+    // if other players join
+    initAvatarSpeed();
+
     if (O2Bar == null) {
         O2Bar = createOxygenBar();
     }
-    // console.log('drawObjects1')
     if (O2Bar) {
         // O2Bar.setMatrix(rcb.beamMatrix()).move(0, 0.43, -0.6).scale(.2, .2, .0001);
         O2Bar.value = Math.max(0,O2Bar.value-O2ConsumedPerTick);
@@ -250,44 +428,19 @@ let drawObjects = () => {
         subO2Bar.setValue(O2Bar.value);
     }
 
-    // console.log('drawObjects2')
     if (gameEndW) {
         gameEndW.hud().scale(.4, .4, .0001);
     }
-    // console.log('drawObjects3')
+
     if (objsInScene.trophies.length == 0) {
-        worldG = new Gltf2Node({ url: './media/gltf/underwater_planet/untitled.gltf' });
-        // worldG = new Gltf2Node({ url: './media/gltf/sunflower/sunflower.gltf' });
-        global.gltfRoot.addNode(worldG);
-        for (const _ of window.croquetModel.scene[OXYGEN_TANK]) {
-
-            // let initTank = new Gltf2Node({ url: './media/gltf/oxygen_kit/scene.gltf' });
-            // let initTank = new Gltf2Node({ url: './media/gltf/oxygen_ballon/scene.gltf' });
-            let initTank = new Gltf2Node({ url: './media/gltf/oxygen_tank/scene.gltf' });
-
-            worldG.addNode(initTank);
-            objsInScene.oxygenTanks.push(initTank);
-        }
-
-        worldP = window.clay.model.add();
-        target = worldP.add('cube');
-
-        for (const objInfo of window.croquetModel.scene[TROPHIES]) {
-            // console.log(`creating cube: ${window.croquetModel.scene[TROPHIES].length}`);
-            if (objInfo.isTrophy) numOfTrophies += 1;
-            let initObj = window.clay.model.add('cube');
-            objsInScene.trophies.push(initObj);
-        }
-
-        // testBox = window.clay.model.add('cube');
-
+        initDraw();
     }
-    // console.log('drawObjects4')
+
     for (let i = 0; i < window.croquetModel.scene[TROPHIES].length; i++) {
         let objInfo = window.croquetModel.scene[TROPHIES][i];
         let curObj = objsInScene.trophies[i];
         if (objInfo.matrix == null) {
-            curObj.identity().move(objInfo.location).color(objInfo.color).scale(objInfo.scale).texture(objInfo.texture);
+            curObj.identity().move(objInfo.location).color(objInfo.color).scale(objInfo.scale);
             objInfo.matrix = curObj.getGlobalMatrix();
             // console.log(`draw1: ${curObj.getGlobalMatrix()}`)
         } else {
@@ -300,7 +453,7 @@ let drawObjects = () => {
             // console.log(`draw2: ${objInfo.matrix}`)
         }
     }
-    // console.log('drawObjects5')
+
     for (let i = 0; i < window.croquetModel.scene[OXYGEN_TANK].length; i++) {
 
         let tankInfo = window.croquetModel.scene[OXYGEN_TANK][i];
@@ -315,9 +468,22 @@ let drawObjects = () => {
     // let t = objsInScene.oxygenTanks[0].worldMatrix.slice(12,15);
     // testBox.identity().move([t[0],t[1]+.125, t[2]]).scale([.125*.5,.3*.5,.125*.5]).opacity(.7);
     // console.log('drawObjects6')
-    target.identity().move(targetLocation).scale(targetScale).opacity(.7);
-    worldG.translation = [0, -3, 0];
-    // console.log('drawObjects7')
+    // target.identity().move(targetLocation).scale(targetScale).opacity(.7);
+    //ADDED!!
+    for (let i = 0; i<8;i++){
+        target.child(i).identity().move(.9*Math.sin(i*Math.PI/4),0,.9*Math.cos(i*Math.PI/4)).turnY(i*Math.PI/4).scale(.4,1,.06);
+    }
+    target.child(8).identity().turnY(Math.PI/8).move(0,-1,0);
+    target.identity().move(targetLocation).scale(targetScale);
+
+    let curPos = [0,0,0];
+    // console.log(`drawObjects: ${window.croquetModel.viewID}`)
+    if(window.croquetModel.viewID in window.croquetModel.scene.avatars){
+        curPos = window.croquetModel.scene.avatars[window.croquetModel.viewID].position;
+    }
+    worldG.translation =cg.add(worldGOffset, cg.scale(curPos, -1));
+    worldP.identity().move( cg.scale(curPos, -1));
+
 
     if(progressBar == null){
         progressBar = createProgressBar();
@@ -341,39 +507,24 @@ let failing = () => {
     for (const objInfo of window.croquetModel.scene[TROPHIES]) {
         if (objInfo.activated) {
             objInfo.inMovement = true;
-            if (objInfo.isTrophy)
-                objInfo.color = [1, 1, 1];
+            objInfo.color = [1, 1, 1];
         }
     }
 }
 
 export let updateModel = e => {
-    console.log("UPDATE")
+    // console.log("UPDATE")
     // if (window.demoseaCroquetState) {
     // e.where => controller matrix, e.info => if trigger previous pressed
     if (objsInScene.trophies.length == 0) return;
-    if (e.what == "bothTriggerPressed" && ifHitAnyTrophies(e.where.left)==ifHitAnyTrophies(e.where.right)){
-        let ml = e.where.left;
-        let leftInAny = ifHitAnyTrophies(ml);
-        let leftTriggerPrev = e.info;
-        if (leftInAny != -1){
-            let hitObjInfo = window.croquetModel.scene[TROPHIES][leftInAny];
-            if (hitObjInfo.isTrophy)
-                OnHitTrophy(leftInAny, leftTriggerPrev , ml);
-            else
-                OnHitBlocker(leftInAny, leftTriggerPrev , ml);
-        }
-
-    }
-    else if (e.what == "rightTriggerPressed") {
+    if (e.what == "rightTriggerPressed") {
         let mr = e.where;
         let rightTriggerPrev = e.info;
         let rightInAny = ifHitAnyTrophies(mr);
 
         console.log(`right press`)
         if (rightInAny != -1) {
-            if (window.croquetModel.scene[TROPHIES][rightInAny].isTrophy)
-                OnHitTrophy(rightInAny, rightTriggerPrev, mr);
+            OnHitTrophy(rightInAny, rightTriggerPrev, mr);
         }
 
     } else if (e.what == "leftTriggerPressed") {
@@ -383,8 +534,7 @@ export let updateModel = e => {
 
         if (leftInAny != -1) {
             // left controller hit something
-            if (window.croquetModel.scene[TROPHIES][leftInAny].isTrophy)
-                OnHitTrophy(leftInAny, leftTriggerPrev, ml);
+            OnHitTrophy(leftInAny, leftTriggerPrev, ml);
         }
     } else if (e.what == "rightTriggerRelease") {
         failing();
@@ -412,6 +562,15 @@ export let updateModel = e => {
             // left controller hit something
             OnHitTank(leftInAny, leftTriggerPrev, ml);
         }
+    }else if(e.what = "joystickMoved") {
+        let joystick = e.where;
+        let viewID = e.info;
+        // console.log(`joystickMoved: key: ${viewID};; ${JSON.stringify(joystick)}`)
+
+        if (viewID in window.croquetModel.scene.avatars){
+            // console.log(`joystickMoved: CHECKED!! key: ${viewID};; ${JSON.stringify(joystick)}`)
+            updateSpeed(joystick.x, joystick.y, viewID);
+        }
     }
 
     if (ifSuccess() && gameEndW == null) {
@@ -421,11 +580,29 @@ export let updateModel = e => {
 
     // }
 }
+//#endregion
 
 export const init = async model => {
     croquet.register('croquetDemo_mydemo3');
     model.setTable(false);
     model.setRoom(false);
+
+    //ADDED!!
+    defineOctTube();
+
+    let largeView = model.add();
+    // add sphere for restricting vision
+    let viewSpheres = largeView.add();
+    let inner = viewSpheres.add();
+    let outer = viewSpheres.add();
+    inner.add('sphere').color(colors[1]).opacity(.2);
+    outer.add('sphere').color(colors[1]).opacity(.4).flag('uNoiseTexture');
+
     model.animate(() => {
+        //ADDED!!
+        let vm = clay.views[0].viewMatrix;
+        inner.identity().scale(-1*innerRadius);
+        outer.identity().scale(-1*outerRadius);
+        viewSpheres.setMatrix(cg.mInverse(vm));
     });
 }

@@ -1,7 +1,8 @@
+
 // YOUR APPLICATION SHOULD REDEFINE THESE FUNCTIONS:
 
 // import { updateModel } from "../scenes/demoCroquet.js";
-import { updateModel, initModel, drawView, drawAvatar} from "../scenes/seaCroquet.js";
+import { updateModel, initModel, drawView} from "../scenes/seaCroquet.js";
 // import { updateModel} from "../scenes/seaCroquet.js";
 import { controllerMatrix,  buttonState, joyStickState} from "../render/core/controllerInput.js";
 import { initAvatar } from "../primitive/avatar.js";
@@ -18,19 +19,17 @@ window.color = [Math.random(), Math.random(), Math.random()]
 //    // if(!croquetModel.scene) croquetModel.scene =  window.clay.model.dataTree;
 // }
 
-// let drawAvatar = actor => {
-//    // console.log(`drawAvatar: ID:${actor.viewId}`);
-//    // console.log(`drawAvatar: ID:${window.avatars.keys}`);
-//    let avatarInfo = actor.avatarPos;
-//    if (avatarInfo.headset) {
-//        window.avatars[actor.viewId].headset.matrix = avatarInfo.headset;
-//    } 
-//        // not in the default pos
-//    if (avatarInfo.controllerMatrix) {
-//        window.avatars[actor.viewId].leftController.matrix = avatarInfo.controllerMatrix.left;
-//        window.avatars[actor.viewId].rightController.matrix = avatarInfo.controllerMatrix.right;
-//    }
-// }
+let drawAvatar = actor => {
+    let avatarInfo = actor.avatarPos;
+    if (avatarInfo.headset) {
+        window.avatars[actor.viewId].headset.matrix = avatarInfo.headset;
+    }
+    // not in the default pos
+    if (avatarInfo.controllerMatrix) {
+        window.avatars[actor.viewId].leftController.matrix = avatarInfo.controllerMatrix.left;
+        window.avatars[actor.viewId].rightController.matrix = avatarInfo.controllerMatrix.right;
+    }
+}
 
 // let drawView    = () => {
 
@@ -113,8 +112,6 @@ export class View extends Croquet.View {
         this.color = window.color; // assign a unique color to each user for them to create their cubes in demoCroquet
         this.pawns = new Map();
         croquetModel.actors.forEach(actor => this.addPawn(actor));
-        // console.log(`View: ${this.viewId}`)
-        croquetModel.viewID =this.viewId;
 
         this.subscribe("actor", "join", this.addPawn);
         this.subscribe("actor", "exit", this.removePawn);
@@ -154,7 +151,14 @@ export class View extends Croquet.View {
         if(preRightTrigger && !buttonState.right[0].pressed) {
             this.event('rightTriggerRelease', controllerMatrix.right, preRightTrigger)
         }
-
+        if(buttonState.left[0].pressed && buttonState.right[0].pressed) {
+            // e.what -> bothRelease, e.where -> controllerMatrix.left, e.info -> controllerMatrix.right
+            let controllerJson = {
+                "left": controllerMatrix.left,
+                "right": controllerMatrix.right,
+            }
+            this.event('bothTriggerPressed', controllerJson, preLeftTrigger);
+        }
         if (buttonState.left[0].pressed) {
             this.event('leftTriggerPressed', controllerMatrix.left, preLeftTrigger);
         }
@@ -163,9 +167,6 @@ export class View extends Croquet.View {
             this.event('leftTriggerRelease', controllerMatrix.right, preLeftTrigger)
         }
 
-        if(joyStickState.left.x != 0 || joyStickState.left.y != 0){
-            this.event('joystickMoved', joyStickState.left, this.viewId);
-        }
 
         this.publish(this.viewId, "updatePos", avatarJson);
         preRightTrigger = buttonState.right[0].pressed;
@@ -182,7 +183,6 @@ export class View extends Croquet.View {
     }
 
     addPawn(actor) {
-        console.log(`addPawn`);
         this.pawns.set(actor, new Pawn(actor));
         if(!(actor.viewId in window.avatars)) {
             initAvatar(actor.viewId);
@@ -251,3 +251,4 @@ export let register = name => {
         tps     : 1000 / 500,
     });
 }
+

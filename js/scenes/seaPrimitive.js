@@ -44,14 +44,14 @@ const targetLocation = [0.8, ground+targetScale[1]/2, .2];
 
 const failingOffset = .001;
 
-let maxSpeed = .22;
+// For mapping joystick inputs to player movement
+let maxSpeed = .12;
 let speedX = 0, speedY = 0;
-let accX = .0032, accY = .0032;
-let eps = 0.00002;
+let accX = .002, accY = .002;
+let eps = 0.00001; // Epsilon for rounding small movements to zero
+let prevX = 0, prevY = 0; // Left joystick's previous positions
 
 let prevPos = [0, 0, 0];
-let prevX = 0, prevY = 0; // Left joystick's previous positions
-//let accX = 0, accY = 0; // play movement acceleration
 let playerPos = [.1, 2.5, .1];
 
 let leftTriggerPrev = false;
@@ -267,7 +267,7 @@ export const init = async model => {
             }
             else
                 speedX = 0;
-            accX = .003;
+            accX = .002;
         }
         if (joyStickY!=0){
             if (joyStickY>0){
@@ -290,7 +290,7 @@ export const init = async model => {
             else{
                 speedY = 0;
             }
-            accY = .003;
+            accY = .002;
         }
         prevX = joyStickX;
         prevY = joyStickY;
