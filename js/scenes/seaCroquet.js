@@ -10,13 +10,13 @@ import { lcb, rcb } from '../handle_scenes.js';
 const TROPHIES = 0;
 const OXYGEN_TANK = 1;
 
-const ground = .1;
+const ground = .2;
 const targetScale = [0.5, .3, .5];
 const targetLocation = [0.8, ground + targetScale[1] / 2, .2];
 
 // const tankScale = [.5,.5,.5];
 const tankScale = [.05, .05, .05];
-const tankDimensions = { x: 1.25 * tankScale[0], y: 3 * tankScale[1], z: 1.25 * tankScale[2] };
+const tankDimensions = { x: 1.5 * tankScale[0], y: 3 * tankScale[1], z: 1.5 * tankScale[2] };
 const getTankCentral = (m) => { return { x: m[0], y: m[1] + .125, z: m[2] }; };
 const amountInTank = .2;
 const O2ConsumedPerTick = .001;
@@ -161,7 +161,7 @@ let ifSuccess = () => {
         }
     }
     itemInTarget = counter;
-    if (counter == objsInScene.length) {
+    if (counter == numOfTrophies) {
         return true;
     }
     return false;
@@ -334,7 +334,7 @@ let failing = () => {
 
 export let updateModel = e => {
     console.log("UPDATE")
-    if (window.demoseaCroquetState) {
+    // if (window.demoseaCroquetState) {
         // e.where => controller matrix, e.info => if trigger previous pressed
         if (objsInScene.trophies.length == 0) return;
         if (e.what == "rightTriggerPressed") {
@@ -389,7 +389,7 @@ export let updateModel = e => {
             gameEndW = GameEnd();
         }
         
-    }
+    // }
 }
 
 export const init = async model => {
