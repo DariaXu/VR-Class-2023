@@ -1,11 +1,11 @@
-import * as cg from "../render/core/cg.js"; 
-import { controllerMatrix, buttonState, joyStickState, viewMatrix } from "../render/core/controllerInput.js";
-import { SimulateMovement } from './simulateMovement.js';
-import { lcb, rcb } from '../handle_scenes.js';
-import { g2 } from "../util/g2.js";
-import { Gltf2Node } from "../render/nodes/gltf2.js";
-import * as global from "../global.js";
-import { quat } from "../render/math/gl-matrix.js";
+import * as cg from "../../render/core/cg.js"; 
+import { controllerMatrix, buttonState, joyStickState, viewMatrix } from "../../render/core/controllerInput.js";
+import { SimulateMovement } from './../simulateMovement.js';
+import { lcb, rcb } from '../../handle_scenes.js';
+import { g2 } from "../../util/g2.js";
+import { Gltf2Node } from "../../render/nodes/gltf2.js";
+import * as global from "../../global.js";
+import { quat } from "../../render/math/gl-matrix.js";
 
 export const init = async model => {
     model.setTable(false);
@@ -43,6 +43,8 @@ export const init = async model => {
       
         let m = boxObj.worldMatrix.slice(12,15);
         // console.log(`view M: ${p};; barrel location: ${m}`);
+        // console.log(`barrel location: ${boxObj.worldMatrix}`);
+
         // let q = cg.mTransform(cg.mInverse(boxObj.worldMatrix()), p);
     
       

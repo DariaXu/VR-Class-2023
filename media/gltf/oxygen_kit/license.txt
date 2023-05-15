@@ -1,0 +1,11 @@
+Model Information:
+* title:	Oxygen kit
+* source:	https://sketchfab.com/3d-models/oxygen-kit-19a7960da7524803bccded394c450fe3
+* author:	Guardiano (https://sketchfab.com/guardiano)
+
+Model License:
+* license type:	CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)
+* requirements:	Author must be credited. No commercial use.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Oxygen kit" (https://sketchfab.com/3d-models/oxygen-kit-19a7960da7524803bccded394c450fe3) by Guardiano (https://sketchfab.com/guardiano) licensed under CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)

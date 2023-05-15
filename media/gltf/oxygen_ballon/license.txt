@@ -1,0 +1,11 @@
+Model Information:
+* title:	Oxygen ballon
+* source:	https://sketchfab.com/3d-models/oxygen-ballon-fd4adafc110d446b9e5c9866a1901cda
+* author:	avkpiter (https://sketchfab.com/avkpiter)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Oxygen ballon" (https://sketchfab.com/3d-models/oxygen-ballon-fd4adafc110d446b9e5c9866a1901cda) by avkpiter (https://sketchfab.com/avkpiter) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
