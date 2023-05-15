@@ -7,8 +7,8 @@ import { Gltf2Node } from "../render/nodes/gltf2.js";
 const large = 1.25;
 const small = .1;
 const sea_size = [5, 1, 5];
-const innerRadius =1.2;
-const outerRadius =1.5;
+const innerRadius =4;
+const outerRadius =5;
 
 const colors = [
     [1, .4, .5],// light pink
@@ -40,7 +40,13 @@ const targetLocation = [0.8, ground+targetScale[1]/2, .2];
 
 const failingOffset = .001;
 
+let speed = 0.025;
+let speedX = 0, speedY = 0;
+
 let prevPos = [0, 0, 0];
+let prevX = 0, prevY = 0; // Left joystick's previous positions
+let accX = 0, accY = 0; // play movement acceleration
+let playerPos = [.1, 2.5, .1];
 
 let leftTriggerPrev = false;
 let rightTriggerPrev = false;
@@ -53,7 +59,7 @@ export const init = async model => {
     console.log("hello?");
     let gltf1 = new Gltf2Node({ url: './media/gltf/underwater_planet/untitled.gltf'});
     gltf1.scale = [.5,.5,.5];
-    gltf1.translation = [-.1, -2.5, -.1];
+    gltf1.translation = cg.scale(playerPos, -1);
 
     // set up the primitive part
     let largeView = model.add();
@@ -66,6 +72,15 @@ export const init = async model => {
 
     global.gltfRoot.addNode(gltf1);
 
+    /**
+     * Player movement setup
+     * **/
+    let joyStickX = 0;
+    let joyStickY = 0;
+    /**
+     * end of player movement setup
+     **/
+
     let world = model.add();
 
     let objsInScene = [];
@@ -76,8 +91,14 @@ export const init = async model => {
         objsInScene.push({ obj: obj, index: counter, location: objInfo.location, scale: objInfo.scale, matrix: null, inMovement: false, color: [1,1,1]});
         counter += 1;
     }
+    // draw collection target
+    let target = world.add();
+    for (let i = 0; i<8; i++){
+        target.add('cube').texture('../media/textures/wood1.png');
+    }
+    target.add('octTubeY').texture('../media/textures/wood1.png');
 
-    let target = world.add('cube');
+    //let target = world.add('cube');
     // }
 
     let placeObjects = () => {
@@ -197,8 +218,63 @@ export const init = async model => {
         outer.identity().scale(-1*outerRadius);
         viewSpheres.setMatrix(cg.mInverse(vm));
 
+        // setup busket shape for the target
+        for (let i = 0; i<8;i++){
+            target.child(i).identity().move(.9*Math.sin(i*Math.PI/4),0,.9*Math.cos(i*Math.PI/4)).turnY(i*Math.PI/4).scale(.4,1,.06);
+        }
+        target.child(8).identity().turnY(Math.PI/8).move(0,-1,0);
+        target.identity().move(targetLocation).scale(targetScale);
 
-        target.identity().move(targetLocation).scale(targetScale).opacity(.7);
+        // controller inputs: player movement
+        let ivm = cg.mInverse(vm);
+        let xDir = ivm.slice(0,3); // x axis, relative to view direction
+        let zDir = ivm.slice(8,11); // z axis, relative to view direction
+        joyStickX = joyStickState.right.x;
+        joyStickY = joyStickState.right.y;
+
+        if (joyStickX!=0){
+            if(prevX==0){
+                accX = .02;
+            }
+            else if(Math.abs(joyStickX)<Math.abs(prevX)){
+                accX = -0.002;
+            }
+            else{
+                accX -= 0.001;
+                accX = Math.max(accX,0);
+            }
+            speedX = Math.max(speedX + accX,0);
+            //let movement = cg.add(cg.scale(xDir,speedX * joyStickX), cg.scale(zDir,speed * joyStickY));
+            playerPos = cg.add(playerPos, cg.scale(xDir,speedX * joyStickX));
+        }
+        else{
+            if (speedX>0)
+                speedX = Math.max(speedX - 0.001,0);
+        }
+        if (joyStickY!=0){
+            if(prevY==0){
+                accY = .02;
+            }
+            else if(Math.abs(joyStickY)<Math.abs(prevY)){
+                accY = -0.002;
+            }
+            else{
+                accY -= 0.001;
+                accY = Math.max(accY,0);
+            }
+            speedY = Math.max(speedY + accY,0);
+            playerPos = cg.add(playerPos, cg.scale(zDir,speedY * joyStickY));
+        }
+        else{
+            if (speedY>0)
+                speedY = Math.max(speedY - 0.001,0);
+        }
+        prevX = joyStickX;
+        prevY = joyStickY;
+        gltf1.translation = cg.scale(playerPos, -1);
+
+
+        target.identity().move(targetLocation).scale(targetScale);
         let ml = controllerMatrix.left;
         let mr = controllerMatrix.right;
 

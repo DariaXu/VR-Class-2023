@@ -227,7 +227,7 @@ export const init = async model => {
         target.identity().move(targetLocation).scale(targetScale).opacity(1);
 
         // controller inputs: player movement
-        gltf1.translation().turnY(joyStickY/10);
+        gltf1.turnY(joyStickY/10);
         joyStickX += joyStickState.right.y;
         joyStickY += joyStickState.right.x;
 
