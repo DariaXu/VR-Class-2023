@@ -363,7 +363,6 @@ export let updateModel = e => {
             else
                 OnHitBlocker(leftInAny, leftTriggerPrev , ml);
         }
-
     }
     else if (e.what == "rightTriggerPressed") {
         let mr = e.where;
