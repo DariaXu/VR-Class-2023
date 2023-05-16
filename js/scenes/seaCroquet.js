@@ -39,11 +39,12 @@ const colors = [
     [.0, .0, .0], // black
 ]
 
-let speed = 0.025;
+// For mapping joystick inputs to player movement
 let speedX = 0, speedY = 0;
+let accX = .002, accY = .002;
+let eps = 0.00001; // Epsilon for rounding small movements to zero
 let prevX = 0, prevY = 0; // Left joystick's previous positions
-let playerPos = [.1, 2.5, .1];
-const maxSpeed = .5
+const maxSpeed = .12;
 
 let prevPos = [0, 0, 0];
 
@@ -213,49 +214,84 @@ let updateSpeed = (joyStickX, joyStickY, viewId)=>{
     console.log(`updateSpeed: key: ${viewId};; ${JSON.stringify(window.croquetModel.scene.avatars[viewId])}`);
     let speedX = window.croquetModel.scene.avatars[viewId].speedX;
     let speedY = window.croquetModel.scene.avatars[viewId].speedY;
-    let prevX = window.croquetModel.scene.avatars[viewId].prevX;
-    let prevY = window.croquetModel.scene.avatars[viewId].prevY;
+    let accX = window.croquetModel.scene.avatars[viewId].accX;
+    let accY = window.croquetModel.scene.avatars[viewId].accY;
 
     if (joyStickX!=0){
         if (joyStickX>0){
-            window.croquetModel.scene.avatars[viewId].speedX = Math.min(maxSpeed, speedX + (joyStickX - prevX) * 0.005);
+            window.croquetModel.scene.avatars[viewId].speedX = Math.min(maxSpeed, speedX + accX);
         }
         else if (joyStickX<0){
-            window.croquetModel.scene.avatars[viewId].speedX = Math.max(-maxSpeed, speedX + (joyStickX - prevX) * 0.005);
+            window.croquetModel.scene.avatars[viewId].speedX = Math.max(-maxSpeed, speedX - accX);
         }
+        window.croquetModel.scene.avatars[viewId].accX *= .98;
+
+        // if (joyStickX>0){
+        //     window.croquetModel.scene.avatars[viewId].speedX = Math.min(maxSpeed, speedX + (joyStickX - prevX) * 0.005);
+        // }
+        // else if (joyStickX<0){
+        //     window.croquetModel.scene.avatars[viewId].speedX = Math.max(-maxSpeed, speedX + (joyStickX - prevX) * 0.005);
+        // }
     }
     else {
         if (speedX>0){
-            window.croquetModel.scene.avatars[viewId].speedX = Math.max(0, speedX - 0.001);
+            window.croquetModel.scene.avatars[viewId].speedX = Math.max(0, speedX *.95 - eps);
         }
         else if (speedX<0){
-            window.croquetModel.scene.avatars[viewId].speedX = Math.min(0, speedX + 0.001);
+            window.croquetModel.scene.avatars[viewId].speedX = Math.min(0, speedX *.95 + eps);
         }
         else
-        window.croquetModel.scene.avatars[viewId].speedX = 0;
+            window.croquetModel.scene.avatars[viewId].speedX = 0;
+        window.croquetModel.scene.avatars[viewId].accX = .002;
     }
+    // else {
+    //     if (speedX>0){
+    //         window.croquetModel.scene.avatars[viewId].speedX = Math.max(0, speedX - 0.001);
+    //     }
+    //     else if (speedX<0){
+    //         window.croquetModel.scene.avatars[viewId].speedX = Math.min(0, speedX + 0.001);
+    //     }
+    //     else
+    //     window.croquetModel.scene.avatars[viewId].speedX = 0;
+    // }
     if (joyStickY!=0){
         if (joyStickY>0){
-            window.croquetModel.scene.avatars[viewId].speedY = Math.min(maxSpeed, speedY + (joyStickY - prevY) * 0.005);
+            window.croquetModel.scene.avatars[viewId].speedY  = Math.min(maxSpeed, speedY + accY);
         }
         else if (joyStickY<0){
-            window.croquetModel.scene.avatars[viewId].speedY = Math.max(-maxSpeed, speedY + (joyStickY - prevY) * 0.005);
+            window.croquetModel.scene.avatars[viewId].speedY  = Math.max(-maxSpeed, speedY - accY);
         }
-
+        window.croquetModel.scene.avatars[viewId].accY *= .98;
+        // if (joyStickY>0){
+        //     window.croquetModel.scene.avatars[viewId].speedY = Math.min(maxSpeed, speedY + (joyStickY - prevY) * 0.005);
+        // }
+        // else if (joyStickY<0){
+        //     window.croquetModel.scene.avatars[viewId].speedY = Math.max(-maxSpeed, speedY + (joyStickY - prevY) * 0.005);
+        // }
     }
     else {
         if (speedY>0){
-            window.croquetModel.scene.avatars[viewId].speedY = Math.max(0, speedY - 0.001);
+            window.croquetModel.scene.avatars[viewId].speedY = Math.max(0, speedY *.95 - eps);
         }
         else if (speedY<0){
-            window.croquetModel.scene.avatars[viewId].speedY = Math.min(0, speedY + 0.001);
+            window.croquetModel.scene.avatars[viewId].speedY = Math.min(0, speedY *.95 + eps);
         }
-        else
-        window.croquetModel.scene.avatars[viewId].speedY = 0;
+        else{
+            window.croquetModel.scene.avatars[viewId].speedY = 0;
+        }
+        window.croquetModel.scene.avatars[viewId].accY = .002;
+        // if (speedY>0){
+        //     window.croquetModel.scene.avatars[viewId].speedY = Math.max(0, speedY - 0.001);
+        // }
+        // else if (speedY<0){
+        //     window.croquetModel.scene.avatars[viewId].speedY = Math.min(0, speedY + 0.001);
+        // }
+        // else
+        // window.croquetModel.scene.avatars[viewId].speedY = 0;
     }
 
-    window.croquetModel.scene.avatars[viewId].prevX = joyStickX;
-    window.croquetModel.scene.avatars[viewId].prevY = joyStickY;
+    // window.croquetModel.scene.avatars[viewId].prevX = joyStickX;
+    // window.croquetModel.scene.avatars[viewId].prevY = joyStickY;
     // console.log(`updateSpeed: x: ${window.croquetModel.scene.avatars[viewId].speedX};; y: ${window.croquetModel.scene.avatars[viewId].speedY}`);
 }
 //#endregion
@@ -268,8 +304,8 @@ let initAvatarSpeed = () => {
         if (!key || key == undefined ||
             key in window.croquetModel.scene.avatars) continue;
         window.croquetModel.scene.avatars[key] = {
-            prevX: 0,
-            prevY:0,
+            accX:0.002,
+            accY:0.002,
             speedX: 0,
             speedY: 0,
             position:[0,0,0],
@@ -395,6 +431,8 @@ export let drawAvatar = (actor) =>{
     let speedX = window.croquetModel.scene.avatars[key].speedX;
     let speedY = window.croquetModel.scene.avatars[key].speedY;
     let movement = cg.add(cg.scale(xDir,speedX), cg.scale(zDir,speedY));
+
+    console.log("SpeedX: "+ speedX + ", SpeedY: "+speedY);
    
     // 4. 把movement加到原来记录的position上
     window.croquetModel.scene.avatars[key].position = cg.add(movement, window.croquetModel.scene.avatars[key].position);
