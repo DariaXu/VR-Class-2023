@@ -39,6 +39,7 @@ const colors = [
     [.0, .0, .0], // black
 ]
 
+let joyStickFlag = false;
 // For mapping joystick inputs to player movement
 let speedX = 0, speedY = 0;
 let accX = .002, accY = .002;
@@ -237,35 +238,19 @@ let updateSpeed = (joyStickX, joyStickY, viewId)=>{
         else if (joyStickX<0){
             window.croquetModel.scene.avatars[viewId].speedX = Math.max(-maxSpeed, speedX - accX);
         }
-        window.croquetModel.scene.avatars[viewId].accX *= .98;
+        // window.croquetModel.scene.avatars[viewId].accX *= .98;
 
-        // if (joyStickX>0){
-        //     window.croquetModel.scene.avatars[viewId].speedX = Math.min(maxSpeed, speedX + (joyStickX - prevX) * 0.005);
-        // }
-        // else if (joyStickX<0){
-        //     window.croquetModel.scene.avatars[viewId].speedX = Math.max(-maxSpeed, speedX + (joyStickX - prevX) * 0.005);
-        // }
-    }
-    else {
-        if (speedX>0){
-            window.croquetModel.scene.avatars[viewId].speedX = Math.max(0, speedX *.95 - eps);
-        }
-        else if (speedX<0){
-            window.croquetModel.scene.avatars[viewId].speedX = Math.min(0, speedX *.95 + eps);
-        }
-        else
-            window.croquetModel.scene.avatars[viewId].speedX = 0;
-        window.croquetModel.scene.avatars[viewId].accX = .002;
     }
     // else {
     //     if (speedX>0){
-    //         window.croquetModel.scene.avatars[viewId].speedX = Math.max(0, speedX - 0.001);
+    //         window.croquetModel.scene.avatars[viewId].speedX = Math.max(0, speedX *.95 - eps);
     //     }
     //     else if (speedX<0){
-    //         window.croquetModel.scene.avatars[viewId].speedX = Math.min(0, speedX + 0.001);
+    //         window.croquetModel.scene.avatars[viewId].speedX = Math.min(0, speedX *.95 + eps);
     //     }
     //     else
-    //     window.croquetModel.scene.avatars[viewId].speedX = 0;
+    //         window.croquetModel.scene.avatars[viewId].speedX = 0;
+    //     window.croquetModel.scene.avatars[viewId].accX = .002;
     // }
     if (joyStickY!=0){
         if (joyStickY>0){
@@ -274,39 +259,55 @@ let updateSpeed = (joyStickX, joyStickY, viewId)=>{
         else if (joyStickY<0){
             window.croquetModel.scene.avatars[viewId].speedY  = Math.max(-maxSpeed, speedY - accY);
         }
-        window.croquetModel.scene.avatars[viewId].accY *= .98;
-        // if (joyStickY>0){
-        //     window.croquetModel.scene.avatars[viewId].speedY = Math.min(maxSpeed, speedY + (joyStickY - prevY) * 0.005);
-        // }
-        // else if (joyStickY<0){
-        //     window.croquetModel.scene.avatars[viewId].speedY = Math.max(-maxSpeed, speedY + (joyStickY - prevY) * 0.005);
-        // }
+        // window.croquetModel.scene.avatars[viewId].accY *= .98;
     }
-    else {
-        if (speedY>0){
-            window.croquetModel.scene.avatars[viewId].speedY = Math.max(0, speedY *.95 - eps);
-        }
-        else if (speedY<0){
-            window.croquetModel.scene.avatars[viewId].speedY = Math.min(0, speedY *.95 + eps);
-        }
-        else{
-            window.croquetModel.scene.avatars[viewId].speedY = 0;
-        }
-        window.croquetModel.scene.avatars[viewId].accY = .002;
-        // if (speedY>0){
-        //     window.croquetModel.scene.avatars[viewId].speedY = Math.max(0, speedY - 0.001);
-        // }
-        // else if (speedY<0){
-        //     window.croquetModel.scene.avatars[viewId].speedY = Math.min(0, speedY + 0.001);
-        // }
-        // else
-        // window.croquetModel.scene.avatars[viewId].speedY = 0;
-    }
-
-    // window.croquetModel.scene.avatars[viewId].prevX = joyStickX;
-    // window.croquetModel.scene.avatars[viewId].prevY = joyStickY;
-    // console.log(`updateSpeed: x: ${window.croquetModel.scene.avatars[viewId].speedX};; y: ${window.croquetModel.scene.avatars[viewId].speedY}`);
+    // else {
+    //     if (speedY>0){
+    //         window.croquetModel.scene.avatars[viewId].speedY = Math.max(0, speedY *.95 - eps);
+    //     }
+    //     else if (speedY<0){
+    //         window.croquetModel.scene.avatars[viewId].speedY = Math.min(0, speedY *.95 + eps);
+    //     }
+    //     else{
+    //         window.croquetModel.scene.avatars[viewId].speedY = 0;
+    //     }
+        // window.croquetModel.scene.avatars[viewId].accY = .002;
+    // }
 }
+
+let decreaseSpeed = () => {
+    console.log(`decreaseSpeed`);
+    for (let viewId in window.croquetModel.scene.avatars){
+        let speedX = window.croquetModel.scene.avatars[viewId].speedX;
+        let speedY = window.croquetModel.scene.avatars[viewId].speedY;
+        console.log(`decreaseSpeed: speedX: ${speedX};; speedY: ${speedY}`)
+        if (speedX != 0) {
+            if (speedX>0){
+                window.croquetModel.scene.avatars[viewId].speedX = Math.max(0, speedX *.95 - eps);
+            }
+            else if (speedX<0){
+                window.croquetModel.scene.avatars[viewId].speedX = Math.min(0, speedX *.95 + eps);
+            }
+            else
+                window.croquetModel.scene.avatars[viewId].speedX = 0;
+        }else{
+            window.croquetModel.scene.avatars[viewId].accX = .002;
+        }
+        if (speedY != 0) {
+            if (speedY>0){
+                window.croquetModel.scene.avatars[viewId].speedY = Math.max(0, speedY *.95 - eps);
+            }
+            else if (speedY<0){
+                window.croquetModel.scene.avatars[viewId].speedY = Math.min(0, speedY *.95 + eps);
+            }
+            else{
+                window.croquetModel.scene.avatars[viewId].speedY = 0;
+            }
+        }else{
+            window.croquetModel.scene.avatars[viewId].accY = .002;
+        }
+    }
+} 
 //#endregion
 
 //#region Croquet
@@ -446,7 +447,7 @@ export let drawAvatar = (actor) =>{
     let speedY = window.croquetModel.scene.avatars[key].speedY;
     let movement = cg.add(cg.scale(xDir,speedX), cg.scale(zDir,speedY));
 
-    console.log("SpeedX: "+ speedX + ", SpeedY: "+speedY);
+    console.log(`drawAvatarSpeedX: speedX: ${speedX}, SpeedY: ${speedY}, movement: ${movement}`);
    
     // 4. 把movement加到原来记录的position上
     window.croquetModel.scene.avatars[key].position = cg.add(movement, window.croquetModel.scene.avatars[key].position);
@@ -469,6 +470,8 @@ let drawObjects = () => {
     // console.log('drawObjects')
     // if other players join
     initAvatarSpeed();
+
+    if (!joyStickFlag) {decreaseSpeed();}
 
     if (O2Bar == null) {
         O2Bar = createOxygenBar();
@@ -565,7 +568,7 @@ let failing = () => {
 }
 
 export let updateModel = e => {
-    // console.log("UPDATE")
+    console.log("UPDATE")
     // if (window.demoseaCroquetState) {
         // e.where => controller matrix, e.info => if trigger previous pressed
         if (objsInScene.trophies.length == 0) return;
@@ -628,7 +631,7 @@ export let updateModel = e => {
                 // left controller hit something
                 OnHitTank(leftInAny, leftTriggerPrev, ml);
             }
-        }else if(e.what = "joystickMoved") {
+        }else if(e.what == "joystickMoved") {
             let joystick = e.where;
             let viewID = e.info;
             // console.log(`joystickMoved: key: ${viewID};; ${JSON.stringify(joystick)}`)
@@ -637,6 +640,10 @@ export let updateModel = e => {
                 // console.log(`joystickMoved: CHECKED!! key: ${viewID};; ${JSON.stringify(joystick)}`)
                 updateSpeed(joystick.x, joystick.y, viewID);
             } 
+            joyStickFlag = true;
+        }
+        if(e.what != "joystickMoved"){
+            joyStickFlag = false;
         }
 
         if (ifSuccess() && gameEndW == null) {
