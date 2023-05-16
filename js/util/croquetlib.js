@@ -149,6 +149,13 @@ export class View extends Croquet.View {
       }
 
       // send event
+      if(buttonState.left[0].pressed && buttonState.right[0].pressed) {
+          let controllerJson = {
+              "left": controllerMatrix.left,
+              "right": controllerMatrix.right,
+          };
+          this.event('bothTriggerPressed', controllerJson, preLeftTrigger);
+      }
       if (buttonState.right[0].pressed) {
          this.event('rightTriggerPressed', controllerMatrix.right, preRightTrigger);
      }
