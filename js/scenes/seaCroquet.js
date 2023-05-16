@@ -11,7 +11,7 @@ import defineOctTube from "./newShapes.js"
 const TROPHIES = 0;
 const OXYGEN_TANK = 1;
 
-const ground = .2;
+const ground = 1;
 const targetScale = [0.5, .3, .5];
 const targetLocation = [0.8, ground + targetScale[1] / 2, .2];
 
@@ -332,10 +332,10 @@ export let initModel = () => {                                // INITIALIZE THE 
     // console.log(objsInScene.length);
     let items =
         [
-            { location: [0.2, 1, .5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
-            { location: [0, 1, .5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
-            { location: [-0.2, 1, .5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
-            { location: [0.2, 1.1, .5], scale: [.6,.2,.9], color: [.9, .9, .9], failingOffset: .1 , isTrophy: false, texture:'../media/textures/rock1.png'}, // scene objects, should initially be on the ground
+            { location: [0.2, .6, -1.5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
+            { location: [0, .5, .5], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
+            { location: [-.8, .9, 1.25], scale: .3, color: [1, 1, 1], failingOffset: .01, isTrophy: true },
+            { location: [-.7, 1., 1.5], scale: [.6,.2,.9], color: [.9, .9, .9], failingOffset: .1 , isTrophy: false, texture:'../media/textures/rock1.png'}, // scene objects, should initially be on the ground
         ];
     window.croquetModel.scene.push([]);
     for (const objInfo of items) {
@@ -354,9 +354,9 @@ export let initModel = () => {                                // INITIALIZE THE 
 
     let oxygenTanks =
         [
-            { location: [0.3, 4, .8] },
-            { location: [0, 4, .8] },
-            { location: [-0.3, 4, .8] },
+            { location: [.2, 3.5, 2.8] },
+            { location: [0, 3.6, .1] },
+            { location: [.8, 4.8, 3.8] },
         ]
     window.croquetModel.scene.push([]);
     for (const objInfo of oxygenTanks) {
@@ -649,7 +649,7 @@ export let updateModel = e => {
 //#endregion
 
 export const init = async model => {
-    croquet.register('croquetDemo_mydemo3');
+    croquet.register('croquetDemo_mydemo1');
     model.setTable(false);
     model.setRoom(false);
 
